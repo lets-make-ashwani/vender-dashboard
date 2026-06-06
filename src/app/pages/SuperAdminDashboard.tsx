@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar';
 import StatCard from '../components/StatCard';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { Toaster, toast } from 'sonner';
 
 const sidebarItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
@@ -24,27 +25,54 @@ const Dashboard = () => {
     totalStudents: 0,
     monthlyStudents: 0
   });
+  const [pendingApps, setPendingApps] = useState<any[]>([]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
+  const fetchDashboardData = async () => {
       try {
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, ''); // Removes trailing slash if present
         
         const token = localStorage.getItem('token');
-        const response = await fetch(`${apiUrl}/api/admin/stats`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        const [statsRes, appsRes] = await Promise.all([
+          fetch(`${apiUrl}/api/admin/stats`, { headers }),
+          fetch(`${apiUrl}/api/admin/applications/pending`, { headers })
+        ]);
+
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (appsRes.ok) setPendingApps(await appsRes.json());
       } catch (error) {
-        console.error("Error fetching admin stats:", error);
+        console.error("Error fetching admin data:", error);
       }
-    };
-    fetchStats();
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
+
+  const handleAction = async (id: string, action: 'approve' | 'reject') => {
+    try {
+      const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = rawApiUrl.replace(/\/$/, '');
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${apiUrl}/api/admin/applications/${id}/${action}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(`Application ${action}d successfully`);
+        fetchDashboardData(); // Refresh the list
+      } else {
+        toast.error(data.message || 'Action failed');
+      }
+    } catch (err) {
+      toast.error('An error occurred');
+    }
+  };
 
   const monthlyData = [
     { month: 'Jan', students: 400, vendors: 20 },
@@ -150,7 +178,29 @@ const Dashboard = () => {
   );
 };
 
-const VendorManagement = () => (
+const VendorManagement = () => {
+  const [vendors, setVendors] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = rawApiUrl.replace(/\/$/, '');
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${apiUrl}/api/admin/vendors`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          setVendors(await response.json());
+        }
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+      }
+    };
+    fetchVendors();
+  }, []);
+
+  return (
   <div className="p-6">
     <div className="mb-6 flex items-center justify-between">
       <h1 className="text-3xl font-bold text-foreground">Vendor Management</h1>
@@ -172,22 +222,25 @@ const VendorManagement = () => (
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: 10 }).map((_, idx) => (
-              <tr key={idx} className="border-b border-border">
-                <td className="py-3 px-4 text-foreground">VND{String(idx + 1).padStart(4, '0')}</td>
-                <td className="py-3 px-4 text-foreground">Vendor {idx + 1}</td>
-                <td className="py-3 px-4 text-muted-foreground">vendor{idx + 1}@example.com</td>
-                <td className="py-3 px-4 text-muted-foreground">+91 9876543{String(idx).padStart(3, '0')}</td>
-                <td className="py-3 px-4 text-foreground">{Math.floor(Math.random() * 500) + 50}</td>
+            {vendors.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-muted-foreground">No active vendors found.</td>
+                </tr>
+            ) : vendors.map((vendor) => (
+              <tr key={vendor.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                <td className="py-3 px-4 text-foreground">{vendor.vendor_id}</td>
+                <td className="py-3 px-4 text-foreground">{vendor.user?.name}</td>
+                <td className="py-3 px-4 text-muted-foreground">{vendor.user?.email}</td>
+                <td className="py-3 px-4 text-muted-foreground">{vendor.user?.phone}</td>
+                <td className="py-3 px-4 text-foreground">{vendor._count?.studentLeads || 0}</td>
                 <td className="py-3 px-4">
-                  <span className="px-3 py-1 bg-success/20 text-success rounded-[8px] text-sm font-semibold">
-                    Active
+                  <span className={`px-3 py-1 rounded-[8px] text-sm font-semibold ${vendor.status === 'ACTIVE' ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'}`}>
+                    {vendor.status}
                   </span>
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">View</Button>
-                    <Button size="sm" variant="ghost">Edit</Button>
+                    <Button size="sm" variant="outline">Details</Button>
                   </div>
                 </td>
               </tr>
@@ -197,9 +250,31 @@ const VendorManagement = () => (
       </div>
     </Card>
   </div>
-);
+)};
 
-const StudentManagement = () => (
+const StudentManagement = () => {
+  const [students, setStudents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = rawApiUrl.replace(/\/$/, '');
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${apiUrl}/api/student-leads`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          setStudents(await response.json());
+        }
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  return (
   <div className="p-6">
     <div className="mb-6">
       <h1 className="text-3xl font-bold text-foreground">Student Management</h1>
@@ -220,17 +295,21 @@ const StudentManagement = () => (
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: 10 }).map((_, idx) => (
-              <tr key={idx} className="border-b border-border">
-                <td className="py-3 px-4 text-foreground">STU{String(idx + 1).padStart(5, '0')}</td>
-                <td className="py-3 px-4 text-foreground">Student {idx + 1}</td>
-                <td className="py-3 px-4 text-muted-foreground">Vendor {Math.floor(Math.random() * 10) + 1}</td>
-                <td className="py-3 px-4 text-muted-foreground">JEE Advanced</td>
-                <td className="py-3 px-4 text-muted-foreground">Class 12</td>
-                <td className="py-3 px-4 text-muted-foreground">+91 9876543{String(idx).padStart(3, '0')}</td>
+            {students.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-muted-foreground">No students have enrolled yet.</td>
+                </tr>
+            ) : students.map((student) => (
+              <tr key={student.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                <td className="py-3 px-4 text-foreground font-mono">...{student.id.slice(-5)}</td>
+                <td className="py-3 px-4 text-foreground">{student.name}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.vendor?.user?.name || 'Direct Enrollment'}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.course?.title || 'Unknown Course'}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.class || '-'}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.phone}</td>
                 <td className="py-3 px-4">
                   <span className="px-3 py-1 bg-success/20 text-success rounded-[8px] text-sm font-semibold">
-                    Active
+                    Enrolled
                   </span>
                 </td>
               </tr>
@@ -240,11 +319,12 @@ const StudentManagement = () => (
       </div>
     </Card>
   </div>
-);
+)};
 
 export default function SuperAdminDashboard() {
   return (
     <div className="flex min-h-screen bg-background">
+      <Toaster position="top-right" richColors />
       <Sidebar items={sidebarItems} basePath="/admin" />
       <main className="flex-1">
         <Routes>

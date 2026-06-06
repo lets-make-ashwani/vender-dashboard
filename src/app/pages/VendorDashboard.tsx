@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart3, Users, UserCheck, Clock, UserCircle, Settings, Copy, Share2, QrCode } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Sidebar from '../components/Sidebar';
@@ -17,9 +17,39 @@ const sidebarItems = [
 ];
 
 const Dashboard = () => {
-  const referralCode = 'SKR8Y4T2P9';
-  const referralLink = `${window.location.origin}/enroll/${referralCode}`;
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    todaysStudents: 0,
+    monthlyStudents: 0,
+    referral_code: 'Loading...'
+  });
+  const [recentStudents, setRecentStudents] = useState<any[]>([]);
   const [showQR, setShowQR] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = rawApiUrl.replace(/\/$/, '');
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+
+        const [statsRes, studentsRes] = await Promise.all([
+          fetch(`${apiUrl}/api/vendor/stats`, { headers }),
+          fetch(`${apiUrl}/api/student-leads`, { headers })
+        ]);
+
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (studentsRes.ok) {
+          const allStudents = await studentsRes.json();
+          setRecentStudents(allStudents.slice(0, 5)); // Only show latest 5
+        }
+      } catch (error) { console.error("Error loading vendor data:", error); }
+    };
+    fetchData();
+  }, []);
+
+  const referralLink = `${window.location.origin}/enroll/${stats.referral_code}`;
 
   const monthlyData = [
     { month: 'Jan', students: 12 },
@@ -55,10 +85,9 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Students" value="58" icon={Users} trend="+15 this month" color="primary" />
-        <StatCard title="Pending Students" value="5" icon={Clock} color="warning" />
-        <StatCard title="Approved Students" value="53" icon={UserCheck} color="success" />
-        <StatCard title="This Month" value="13" icon={BarChart3} trend="+28%" color="secondary" />
+        <StatCard title="Total Referrals" value={stats.totalStudents} icon={Users} color="primary" />
+        <StatCard title="Monthly Referrals" value={stats.monthlyStudents} icon={BarChart3} color="success" />
+        <StatCard title="Today's Referrals" value={stats.todaysStudents} icon={Clock} color="warning" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -70,9 +99,9 @@ const Dashboard = () => {
               <label className="text-sm text-muted-foreground mb-2 block">Your Referral Code</label>
               <div className="flex gap-2">
                 <div className="flex-1 bg-primary-light border-2 border-primary rounded-[12px] px-4 py-3">
-                  <p className="text-2xl font-bold text-primary text-center tracking-wider">{referralCode}</p>
+                  <p className="text-2xl font-bold text-primary text-center tracking-wider">{stats.referral_code}</p>
                 </div>
-                <Button variant="outline" onClick={() => copyToClipboard(referralCode)}>
+                <Button variant="outline" onClick={() => copyToClipboard(stats.referral_code)}>
                   <Copy className="w-5 h-5" />
                 </Button>
               </div>
@@ -116,7 +145,7 @@ const Dashboard = () => {
                 <div className="w-48 h-48 mx-auto bg-gradient-to-br from-primary-light to-accent rounded-[12px] flex items-center justify-center mb-4">
                   <QrCode className="w-32 h-32 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">QR Code for {referralCode}</p>
+                <p className="text-sm text-muted-foreground">QR Code for {stats.referral_code}</p>
                 <p className="text-xs text-muted-foreground mt-1">Students can scan this to register</p>
               </div>
             )}
@@ -152,28 +181,20 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {[
-                { name: 'Rahul Kumar', phone: '+91 98765 43210', class: 'Class 12', course: 'JEE Advanced', status: 'Approved', date: '2026-06-05' },
-                { name: 'Priya Sharma', phone: '+91 98765 43211', class: 'Class 11', course: 'NEET Complete', status: 'Approved', date: '2026-06-04' },
-                { name: 'Amit Patel', phone: '+91 98765 43212', class: 'Class 10', course: 'CBSE Mathematics', status: 'Pending', date: '2026-06-03' },
-                { name: 'Neha Singh', phone: '+91 98765 43213', class: 'Class 12', course: 'Physics Masterclass', status: 'Approved', date: '2026-06-02' },
-                { name: 'Arjun Reddy', phone: '+91 98765 43214', class: 'Class 11', course: 'Chemistry Complete', status: 'Approved', date: '2026-06-01' }
-              ].map((student, idx) => (
+              {recentStudents.length === 0 ? (
+                 <tr><td colSpan={6} className="py-6 text-center text-muted-foreground">No students referred yet.</td></tr>
+              ) : recentStudents.map((student, idx) => (
                 <tr key={idx} className="border-b border-border">
                   <td className="py-3 px-4 text-foreground">{student.name}</td>
                   <td className="py-3 px-4 text-muted-foreground">{student.phone}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{student.class}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{student.course}</td>
+                  <td className="py-3 px-4 text-muted-foreground">{student.class || '-'}</td>
+                  <td className="py-3 px-4 text-muted-foreground">{student.course?.title || 'Unknown'}</td>
                   <td className="py-3 px-4">
-                    <span className={`px-3 py-1 rounded-[8px] text-sm font-semibold ${
-                      student.status === 'Approved'
-                        ? 'bg-success/20 text-success'
-                        : 'bg-warning/20 text-warning'
-                    }`}>
-                      {student.status}
+                    <span className="px-3 py-1 bg-success/20 text-success rounded-[8px] text-sm font-semibold">
+                      Enrolled
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-muted-foreground">{student.date}</td>
+                  <td className="py-3 px-4 text-muted-foreground">{new Date(student.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -184,7 +205,29 @@ const Dashboard = () => {
   );
 };
 
-const StudentList = () => (
+const StudentList = () => {
+  const [students, setStudents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = rawApiUrl.replace(/\/$/, '');
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${apiUrl}/api/student-leads`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          setStudents(await response.json());
+        }
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  return (
   <div className="p-6">
     <div className="mb-6">
       <h1 className="text-3xl font-bold text-foreground">All Students</h1>
@@ -205,23 +248,21 @@ const StudentList = () => (
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: 15 }).map((_, idx) => (
-              <tr key={idx} className="border-b border-border">
-                <td className="py-3 px-4 text-foreground">Student {idx + 1}</td>
-                <td className="py-3 px-4 text-muted-foreground">student{idx + 1}@example.com</td>
-                <td className="py-3 px-4 text-muted-foreground">+91 9876543{String(idx).padStart(3, '0')}</td>
-                <td className="py-3 px-4 text-muted-foreground">Class {10 + (idx % 3)}</td>
-                <td className="py-3 px-4 text-muted-foreground">JEE Advanced</td>
+            {students.length === 0 ? (
+                 <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">No students referred yet.</td></tr>
+            ) : students.map((student) => (
+              <tr key={student.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                <td className="py-3 px-4 text-foreground">{student.name}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.email}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.phone}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.class || '-'}</td>
+                <td className="py-3 px-4 text-muted-foreground">{student.course?.title || 'Unknown'}</td>
                 <td className="py-3 px-4">
-                  <span className={`px-3 py-1 rounded-[8px] text-sm font-semibold ${
-                    idx % 3 === 0
-                      ? 'bg-warning/20 text-warning'
-                      : 'bg-success/20 text-success'
-                  }`}>
-                    {idx % 3 === 0 ? 'Pending' : 'Approved'}
+                  <span className="px-3 py-1 bg-success/20 text-success rounded-[8px] text-sm font-semibold">
+                    Enrolled
                   </span>
                 </td>
-                <td className="py-3 px-4 text-muted-foreground">2026-06-{String(idx + 1).padStart(2, '0')}</td>
+                <td className="py-3 px-4 text-muted-foreground">{new Date(student.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
@@ -229,7 +270,7 @@ const StudentList = () => (
       </div>
     </Card>
   </div>
-);
+)};
 
 const Profile = () => (
   <div className="p-6">
