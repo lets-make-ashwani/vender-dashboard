@@ -20,7 +20,9 @@ export default function Login() {
     setLoading(true);
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = rawApiUrl.replace(/\/$/, ''); // Removes trailing slash if present
+      
       const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

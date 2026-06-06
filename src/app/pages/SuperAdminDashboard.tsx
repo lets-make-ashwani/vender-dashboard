@@ -28,7 +28,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const apiUrl = rawApiUrl.replace(/\/$/, ''); // Removes trailing slash if present
+        
         const token = localStorage.getItem('token');
         const response = await fetch(`${apiUrl}/api/admin/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
