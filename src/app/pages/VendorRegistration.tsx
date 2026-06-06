@@ -97,7 +97,6 @@ export default function VendorRegistration() {
               </li>
             </ul>
           </div>
-          <Button onClick={() => window.location.href = '/'}>Back to Home</Button>
         </Card>
       </div>
     );
@@ -226,6 +225,8 @@ export default function VendorRegistration() {
                     onChange={handleChange}
                     required
                     placeholder="123456"
+                    pattern="\d{6}"
+                    title="Pincode must be exactly 6 digits"
                   />
                 </div>
               </div>
@@ -243,7 +244,9 @@ export default function VendorRegistration() {
                     required
                     placeholder="1234 5678 9012"
                     maxLength={12}
+                    minLength={12}
                     pattern="\d{12}"
+                    title="Aadhaar must be exactly 12 digits"
                   />
                   <Input
                     label="PAN Card Number"
@@ -253,6 +256,9 @@ export default function VendorRegistration() {
                     required
                     placeholder="ABCDE1234F"
                     maxLength={10}
+                    minLength={10}
+                    pattern="[a-zA-Z]{5}[0-9]{4}[a-zA-Z]{1}"
+                    title="PAN must be in format: 5 letters, 4 numbers, 1 letter (e.g., ABCDE1234F)"
                     className="uppercase"
                   />
                 </div>
@@ -357,6 +363,9 @@ export default function VendorRegistration() {
                     required
                     placeholder="SBIN0000001"
                     maxLength={11}
+                    minLength={11}
+                    pattern="[a-zA-Z]{4}0[a-zA-Z0-9]{6}"
+                    title="IFSC Code must be 11 characters, with the 5th character as 0 (e.g., SBIN0000001)"
                     className="uppercase"
                   />
                 </div>
