@@ -27,6 +27,7 @@ const Dashboard = () => {
   });
   const [pendingApps, setPendingApps] = useState<any[]>([]);
   const [viewApp, setViewApp] = useState<any>(null);
+  const [newVendorCreds, setNewVendorCreds] = useState<any>(null);
 
   const fetchDashboardData = async () => {
       try {
@@ -66,6 +67,9 @@ const Dashboard = () => {
       const data = await response.json();
       if (response.ok) {
         toast.success(`Application ${action}d successfully`);
+        if (action === 'approve' && data.credentials) {
+          setNewVendorCreds(data.credentials);
+        }
         fetchDashboardData(); // Refresh the list
       } else {
         toast.error(data.message || 'Action failed');
@@ -251,6 +255,26 @@ const Dashboard = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!newVendorCreds} onOpenChange={(open) => !open && setNewVendorCreds(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vendor Approved Successfully!</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4 text-sm">
+            <p className="text-warning-foreground bg-warning/10 p-3 rounded-[8px] border border-warning/20">
+              <strong>For Testing Purposes:</strong> Here are the newly generated login credentials for this vendor. You can use these to test the Vendor Dashboard.
+            </p>
+            <div className="bg-muted p-4 rounded-[8px] space-y-2">
+              <p><strong>Email:</strong> {newVendorCreds?.email}</p>
+              <p><strong>Password:</strong> {newVendorCreds?.password}</p>
+            </div>
+            <Button className="w-full" onClick={() => { navigator.clipboard.writeText(`Email: ${newVendorCreds?.email} | Password: ${newVendorCreds?.password}`); toast.success('Copied to clipboard!'); }}>
+              Copy Credentials
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
