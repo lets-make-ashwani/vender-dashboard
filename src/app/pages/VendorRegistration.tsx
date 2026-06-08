@@ -71,7 +71,7 @@ export default function VendorRegistration() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-light to-accent flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-primary-light to-accent flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center">
           <div className="w-20 h-20 bg-warning rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock className="w-12 h-12 text-warning-foreground" />
@@ -103,7 +103,7 @@ export default function VendorRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-light to-accent py-12">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-primary-light to-accent py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">

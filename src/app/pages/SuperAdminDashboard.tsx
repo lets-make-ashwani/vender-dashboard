@@ -733,14 +733,14 @@ const Logout = () => {
   useEffect(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    navigate('/login');
+    window.location.href = '/login'; // Using href to trigger full app reload for Navbar
   }, [navigate]);
   return null;
 };
 
 export default function SuperAdminDashboard() {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-[calc(100vh-4rem)] bg-background">
       <Toaster position="top-right" richColors />
       <Sidebar items={sidebarItems} basePath="/admin" />
       <main className="flex-1">

@@ -9,11 +9,13 @@ import Login from './pages/Login';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import VendorDashboard from './pages/VendorDashboard';
 import ProtectedRoute from './pages/ProtectedRoute';
+import Navbar from './components/Navbar';
 
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <BrowserRouter>
+        <Navbar />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/courses" element={<CourseListing />} />

@@ -36,9 +36,9 @@ export default function Login() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.user.role);
       
-      if (data.user.role === 'SUPER_ADMIN') navigate('/admin/dashboard');
-      else if (data.user.role === 'VENDOR') navigate('/vendor/dashboard');
-      else navigate('/');
+      if (data.user.role === 'SUPER_ADMIN') window.location.href = '/admin/dashboard'; // Using href to trigger full app reload for Navbar
+      else if (data.user.role === 'VENDOR') window.location.href = '/vendor/dashboard';
+      else window.location.href = '/';
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -54,7 +54,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-light via-background to-accent flex items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-primary-light via-background to-accent flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">

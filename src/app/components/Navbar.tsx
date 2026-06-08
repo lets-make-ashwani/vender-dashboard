@@ -5,6 +5,8 @@ import Button from './Button';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
 
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
@@ -18,9 +20,15 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/login">
-              <Button size="sm">Login</Button>
-            </Link>
+            {token ? (
+              <Link to={role === 'SUPER_ADMIN' ? '/admin/dashboard' : '/vendor/dashboard'}>
+                <Button size="sm">Dashboard</Button>
+              </Link>
+            ) : (
+              <Link to="/login">
+                <Button size="sm">Login</Button>
+              </Link>
+            )}
           </div>
 
           <button
@@ -33,9 +41,15 @@ export default function Navbar() {
 
         {isOpen && (
           <div className="md:hidden py-4 space-y-4">
-            <Link to="/login" onClick={() => setIsOpen(false)}>
-              <Button size="sm" className="w-full">Login</Button>
-            </Link>
+            {token ? (
+              <Link to={role === 'SUPER_ADMIN' ? '/admin/dashboard' : '/vendor/dashboard'} onClick={() => setIsOpen(false)}>
+                <Button size="sm" className="w-full">Dashboard</Button>
+              </Link>
+            ) : (
+              <Link to="/login" onClick={() => setIsOpen(false)}>
+                <Button size="sm" className="w-full">Login</Button>
+              </Link>
+            )}
           </div>
         )}
       </div>

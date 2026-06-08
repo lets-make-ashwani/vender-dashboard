@@ -339,14 +339,14 @@ const Logout = () => {
   useEffect(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    navigate('/login');
+    window.location.href = '/login'; // Using href to trigger full app reload for Navbar
   }, [navigate]);
   return null;
 };
 
 export default function VendorDashboard() {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-[calc(100vh-4rem)] bg-background">
       <Sidebar items={sidebarItems} basePath="/vendor" />
       <main className="flex-1">
         <Routes>
