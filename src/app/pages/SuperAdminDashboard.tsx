@@ -230,6 +230,7 @@ const VendorManagement = () => {
   const [vendors, setVendors] = useState<any[]>([]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [viewVendor, setViewVendor] = useState<any>(null);
   const [newVendorCreds, setNewVendorCreds] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: ''
@@ -336,7 +337,7 @@ const VendorManagement = () => {
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">Details</Button>
+                    <Button size="sm" variant="outline" onClick={() => setViewVendor(vendor)}>Details</Button>
                   </div>
                 </td>
               </tr>
@@ -384,6 +385,55 @@ const VendorManagement = () => {
             Copy Message to Share
           </Button>
         </div>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={!!viewVendor} onOpenChange={(open) => !open && setViewVendor(null)}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Vendor Details</DialogTitle>
+        </DialogHeader>
+        {viewVendor && (
+          <div className="space-y-6 mt-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <p><strong>Vendor ID:</strong> {viewVendor.vendor_id}</p>
+              <p><strong>Referral Code:</strong> {viewVendor.referral_code}</p>
+              <p><strong>Name:</strong> {viewVendor.user?.name}</p>
+              <p><strong>Email:</strong> {viewVendor.user?.email}</p>
+              <p><strong>Phone:</strong> {viewVendor.user?.phone}</p>
+              <p><strong>Address:</strong> {viewVendor.address}, {viewVendor.city}, {viewVendor.state} - {viewVendor.pincode}</p>
+              <p><strong>Aadhaar Number:</strong> {viewVendor.aadhaar_number}</p>
+              <p><strong>PAN Number:</strong> {viewVendor.pan_number}</p>
+              <p><strong>Bank:</strong> {viewVendor.bank_name} ({viewVendor.branch_name})</p>
+              <p><strong>Account No:</strong> {viewVendor.account_number}</p>
+              <p><strong>IFSC:</strong> {viewVendor.ifsc_code}</p>
+            </div>
+            
+            <div className="bg-warning/10 border border-warning/20 p-4 rounded-[8px]">
+               <p className="text-sm text-warning-foreground">
+                 <strong>Note about Passwords:</strong> For security reasons, vendor passwords are encrypted (hashed) in the database and cannot be viewed by anyone, including Super Admins. If a vendor loses their password, they must use the "Forgot Password" flow to reset it.
+               </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-3">Uploaded Documents</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {viewVendor.aadhaar_front && (
+                  <div className="border rounded p-2"><p className="text-xs text-center mb-2 font-medium">Aadhaar (Front)</p><img src={viewVendor.aadhaar_front} alt="Aadhaar Front" className="w-full h-auto object-contain rounded" /></div>
+                )}
+                {viewVendor.aadhaar_back && (
+                  <div className="border rounded p-2"><p className="text-xs text-center mb-2 font-medium">Aadhaar (Back)</p><img src={viewVendor.aadhaar_back} alt="Aadhaar Back" className="w-full h-auto object-contain rounded" /></div>
+                )}
+                {viewVendor.pan_image && (
+                  <div className="border rounded p-2"><p className="text-xs text-center mb-2 font-medium">PAN Card</p><img src={viewVendor.pan_image} alt="PAN Card" className="w-full h-auto object-contain rounded" /></div>
+                )}
+                {viewVendor.passbook_image && (
+                  <div className="border rounded p-2"><p className="text-xs text-center mb-2 font-medium">Bank Passbook</p><img src={viewVendor.passbook_image} alt="Passbook" className="w-full h-auto object-contain rounded" /></div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   </div>

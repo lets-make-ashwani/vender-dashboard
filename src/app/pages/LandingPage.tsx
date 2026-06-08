@@ -53,7 +53,7 @@ export default function LandingPage() {
                       <Award className="w-6 h-6 text-warning-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold">500+ Vendors</p>
+                      <p className="font-semibold">500+ Partners</p>
                       <p className="text-sm text-muted-foreground">Trusted Partners</p>
                     </div>
                   </div>
@@ -83,7 +83,7 @@ export default function LandingPage() {
             </div>
             <div>
               <p className="text-4xl md:text-5xl font-bold text-primary">500+</p>
-              <p className="text-muted-foreground mt-2">Vendors</p>
+              <p className="text-muted-foreground mt-2">Partners</p>
             </div>
             <div>
               <p className="text-4xl md:text-5xl font-bold text-primary">95%</p>
@@ -207,7 +207,7 @@ export default function LandingPage() {
           </div>
           <div className="space-y-4">
             {[
-              { q: 'How do I enroll in a course?', a: 'You can enroll through our website or use a referral link from a vendor partner.' },
+              { q: 'How do I enroll in a course?', a: 'You can enroll through our website or use a referral link from a partner.' },
               { q: 'What is the refund policy?', a: 'We offer a 7-day money-back guarantee if you are not satisfied with the course.' },
               { q: 'Are the classes live or recorded?', a: 'We offer both live interactive classes and recorded video lectures for flexibility.' }
             ].map((faq, idx) => (

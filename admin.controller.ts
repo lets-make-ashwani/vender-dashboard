@@ -5,11 +5,11 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: process.env.SMTP_PORT === '465' || !process.env.SMTP_PORT, // true for 465, false for other ports
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.SMTP_USER || process.env.EMAIL_USER,
+    pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
   },
 });
 
@@ -169,13 +169,14 @@ export const approveApplication = async (req: Request, res: Response): Promise<a
 
     await prisma.vendorApplication.update({ where: { id }, data: { status: 'APPROVED' } });
     
+    const loginLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
     // Send approval email with credentials
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'noreply@topperssikshakendra.com',
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@topperssikshakendra.com',
         to: user.email,
         subject: 'Topper\'s Siksha Kendra - Vendor Account Approved!',
-        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;"> <h2 style="color: #FF6B00;">Congratulations, ${user.name}!</h2> <p>Your application to become a Topper<span style="color: #FF6B00;">'s</span> Siksha <span style="color: #FF6B00;">Kendra</span> Vendor has been <strong>approved</strong>.</p> <p>Here are your official details:</p> <ul> <li><strong>Vendor ID:</strong> ${vendor_id}</li> <li><strong>Referral Code:</strong> ${referral_code}</li> </ul> <p>You can now log into your dashboard and start referring students:</p> <p style="background: #f4f4f4; padding: 10px; border-radius: 5px;"> <strong>Login Email:</strong> ${user.email}<br/> <strong>Temporary Password:</strong> ${plainPassword} </p> <a href="${process.env.FRONTEND_URL}/login" style="display: inline-block; padding: 10px 20px; background: #FF6B00; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px;">Login to Dashboard</a> </div>`
+        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;"> <h2 style="color: #FF6B00;">Congratulations, ${user.name}!</h2> <p>Your application to become a Topper<span style="color: #FF6B00;">'s</span> Siksha <span style="color: #FF6B00;">Kendra</span> Vendor has been <strong>approved</strong>.</p> <p>Here are your official details:</p> <ul> <li><strong>Vendor ID:</strong> ${vendor_id}</li> <li><strong>Referral Code:</strong> ${referral_code}</li> </ul> <p>You can now log into your dashboard and start referring students:</p> <p style="background: #f4f4f4; padding: 10px; border-radius: 5px;"> <strong>Login Email:</strong> ${user.email}<br/> <strong>Temporary Password:</strong> ${plainPassword} </p> <a href="${loginLink}" style="display: inline-block; padding: 10px 20px; background: #FF6B00; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px;">Login to Dashboard</a> </div>`
       });
     } catch (emailError) {
       console.error("Email failed to send but vendor was approved", emailError);
