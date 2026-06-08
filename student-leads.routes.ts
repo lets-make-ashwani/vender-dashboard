@@ -4,7 +4,7 @@ import { authenticate } from './auth.middleware';
 
 const router = Router();
 
-router.post('/submit', submitLead); // Public
+router.post('/', submitLead); // Public
 router.get('/', authenticate, getLeads); // Protected (Vendor/Admin)
 
 export default router;
