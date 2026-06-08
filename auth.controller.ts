@@ -83,7 +83,8 @@ export const applyForVendor = async (req: Request, res: Response): Promise<any> 
     
     // 1. Check if the email or phone is already registered as an active User
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email: data.email }, { phone: data.phone }] }
+      where: { OR: [{ email: data.email }, { phone: data.phone }] },
+      select: { email: true, phone: true }
     });
     if (existingUser) {
       if (existingUser.email === data.email) return res.status(400).json({ message: 'This email address is already registered. Please use another email.' });
@@ -92,7 +93,8 @@ export const applyForVendor = async (req: Request, res: Response): Promise<any> 
 
     // 2. Check if the email or phone is already in a pending Vendor Application
     const existingApp = await prisma.vendorApplication.findFirst({
-      where: { OR: [{ email: data.email }, { phone: data.phone }] }
+      where: { OR: [{ email: data.email }, { phone: data.phone }] },
+      select: { email: true, phone: true }
     });
     if (existingApp) {
       if (existingApp.email === data.email) return res.status(400).json({ message: 'An application with this email already exists. Please use another email.' });

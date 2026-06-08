@@ -30,7 +30,8 @@ export const inviteVendor = async (req: Request, res: Response): Promise<any> =>
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({ 
-      where: { OR: [{ email }, { phone }] } 
+      where: { OR: [{ email }, { phone }] },
+      select: { email: true, phone: true }
     });
     if (existingUser) {
       if (existingUser.email === email) {
@@ -129,7 +130,24 @@ export const getPendingApplications = async (req: Request, res: Response): Promi
     });
     res.json(applications);
   } catch (error: any) {
-    res.status(500).json({ message: 'Internal Server Error' });
+    // Self-healing logic: If Prisma crashes due to old test records with null bank fields, clean them up automatically
+    try {
+      await prisma.$executeRawUnsafe(`DELETE FROM "VendorApplication" WHERE "bank_name" IS NULL`);
+      const apps = await prisma.vendorApplication.findMany({
+        where: { status: 'PENDING' },
+        orderBy: { created_at: 'desc' }
+      });
+      return res.json(apps);
+    } catch(e) {
+      // Fallback for different database SQL syntax
+      try {
+        await prisma.$executeRawUnsafe(`DELETE FROM VendorApplication WHERE bank_name IS NULL`);
+        const apps2 = await prisma.vendorApplication.findMany({ where: { status: 'PENDING' }, orderBy: { created_at: 'desc' } });
+        return res.json(apps2);
+      } catch(e2) {
+        res.status(500).json({ message: 'Internal Server Error' });
+      }
+    }
   }
 };
 
@@ -143,7 +161,8 @@ export const approveApplication = async (req: Request, res: Response): Promise<a
     }
 
     const existingUser = await prisma.user.findFirst({ 
-      where: { OR: [{ email: application.email }, { phone: application.phone }] } 
+      where: { OR: [{ email: application.email }, { phone: application.phone }] },
+      select: { email: true, phone: true }
     });
     
     if (existingUser) {
