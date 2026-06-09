@@ -66,6 +66,7 @@ model VendorApplication {
   account_number String?
   ifsc_code      String?
   passbook_image String?
+  password   String
   status     ApplicationStatus @default(PENDING)
   created_at DateTime          @default(now())
   updated_at DateTime          @updatedAt

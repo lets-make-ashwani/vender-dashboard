@@ -34,6 +34,7 @@ const applicationSchema = z.object({
   account_number: z.string().min(5, "Account number is required"),
   ifsc_code: z.string().min(11, "IFSC code is required"),
   passbook_image: z.string().min(1, "Passbook image is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export const login = async (req: Request, res: Response): Promise<any> => {
@@ -120,9 +121,14 @@ export const applyForVendor = async (req: Request, res: Response): Promise<any> 
     const uploadPan = await cloudinary.uploader.upload(data.pan_image, { folder: 'siksha_kendra/vendors' });
     const uploadPassbook = await cloudinary.uploader.upload(data.passbook_image, { folder: 'siksha_kendra/vendors' });
 
+    // Extract password to hash it separately
+    const { password, ...otherData } = data;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Save application with the secure URLs
     await prisma.vendorApplication.create({ data: { 
-      ...data, 
+      ...otherData, 
+      password: hashedPassword,
       aadhaar_front: uploadAadhaarFront.secure_url,
       aadhaar_back: uploadAadhaarBack.secure_url,
       pan_image: uploadPan.secure_url,

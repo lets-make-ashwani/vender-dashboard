@@ -184,8 +184,7 @@ export const approveApplication = async (req: Request, res: Response): Promise<a
         return res.status(400).json({ message: 'A user with this phone number already exists.' });
     }
 
-    const plainPassword = Math.random().toString(36).slice(-8) + 'A1!'; 
-    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const hashedPassword = application.password;
     const vendorCount = await prisma.vendor.count();
     const vendor_id = `VND${String(vendorCount + 1).padStart(6, '0')}`;
     const referral_code = generateReferralCode();
@@ -223,12 +222,12 @@ export const approveApplication = async (req: Request, res: Response): Promise<a
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@topperssikshakendra.com',
       to: user.email,
       subject: 'Topper\'s Shiksha Kendra - Vendor Account Approved!',
-      html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;"> <h2 style="color: #FF6B00;">Congratulations, ${user.name}!</h2> <p>Your application to become a Topper<span style="color: #FF6B00;">'s</span> Shiksha <span style="color: #FF6B00;">Kendra</span> Vendor has been <strong>approved</strong>.</p> <p>Here are your official details:</p> <ul> <li><strong>Vendor ID:</strong> ${vendor_id}</li> <li><strong>Referral Code:</strong> ${referral_code}</li> </ul> <p>You can now log into your dashboard and start referring students:</p> <p style="background: #f4f4f4; padding: 10px; border-radius: 5px;"> <strong>Login Email:</strong> ${user.email}<br/> <strong>Temporary Password:</strong> ${plainPassword} </p> <a href="${loginLink}" style="display: inline-block; padding: 10px 20px; background: #FF6B00; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px;">Login to Dashboard</a> </div>`
+      html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;"> <h2 style="color: #FF6B00;">Congratulations, ${user.name}!</h2> <p>Your application to become a Topper<span style="color: #FF6B00;">'s</span> Shiksha <span style="color: #FF6B00;">Kendra</span> Vendor has been <strong>approved</strong>.</p> <p>Here are your official details:</p> <ul> <li><strong>Vendor ID:</strong> ${vendor_id}</li> <li><strong>Referral Code:</strong> ${referral_code}</li> </ul> <p>You can now log into your dashboard and start referring students:</p> <p style="background: #f4f4f4; padding: 10px; border-radius: 5px;"> <strong>Login Email:</strong> ${user.email}<br/> <strong>Password:</strong> Use the password you entered during registration. </p> <a href="${loginLink}" style="display: inline-block; padding: 10px 20px; background: #FF6B00; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px;">Login to Dashboard</a> </div>`
     }).catch((emailError) => {
       console.error("Email failed to send but vendor was approved", emailError);
     });
 
-    res.json({ message: 'Vendor approved successfully.', credentials: { email: user.email, password: plainPassword } });
+    res.json({ message: 'Vendor approved successfully.', credentials: { email: user.email } });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Internal Server Error' });
   }

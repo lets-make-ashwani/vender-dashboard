@@ -13,6 +13,7 @@ export default function VendorRegistration() {
     name: '',
     email: '',
     phone: '',
+    password: '',
     address: '',
     city: '',
     state: '',
@@ -194,6 +195,16 @@ export default function VendorRegistration() {
                     title="Phone number must be exactly 10 digits"
                   />
                 </div>
+                <Input
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  placeholder="Create a strong password (minimum 6 characters)"
+                  minLength={6}
+                />
               </div>
             </div>
 
