@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Card from '../components/Card';
 import { Logo } from '../components/Logo';
+import { Skeleton } from '../components/ui/skeleton';
 
 export default function StudentRegistration() {
   const { referralCode } = useParams();
@@ -12,6 +13,7 @@ export default function StudentRegistration() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [courses, setCourses] = useState<any[]>([]);
+  const [isFetchingCourses, setIsFetchingCourses] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -28,6 +30,7 @@ export default function StudentRegistration() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        setIsFetchingCourses(true);
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, '');
         const response = await fetch(`${apiUrl}/api/courses`);
@@ -36,6 +39,8 @@ export default function StudentRegistration() {
         }
       } catch (err) {
         console.error("Failed to load courses", err);
+      } finally {
+        setIsFetchingCourses(false);
       }
     };
     fetchCourses();
@@ -135,11 +140,6 @@ export default function StudentRegistration() {
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-3">Student Registration</h1>
           <p className="text-lg text-muted-foreground">Join thousands of students on their learning journey</p>
-          {referralCode && (
-            <div className="mt-4 inline-block bg-card px-4 py-2 rounded-[12px] border border-border">
-              <p className="text-sm text-muted-foreground">Referral Code: <span className="font-bold text-primary">{referralCode}</span></p>
-            </div>
-          )}
         </div>
 
         <Card>
@@ -267,18 +267,22 @@ export default function StudentRegistration() {
 
             <div>
               <label className="block mb-2 text-foreground">Select Course</label>
-              <select
-                name="course"
-                value={formData.course}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-input-background border border-input rounded-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="">Choose a course</option>
-                {filteredCourses.map(c => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-              </select>
+              {isFetchingCourses ? (
+                <Skeleton className="w-full h-[50px] rounded-[12px]" />
+              ) : (
+                <select
+                  name="course"
+                  value={formData.course}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-input-background border border-input rounded-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Choose a course</option>
+                  {filteredCourses.map(c => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">

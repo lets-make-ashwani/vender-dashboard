@@ -8,6 +8,7 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import { toast, Toaster } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Skeleton } from '../components/ui/skeleton';
 
 const sidebarItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
@@ -28,10 +29,12 @@ const Dashboard = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [viewStudent, setViewStudent] = useState<any>(null);
   const [totalEarnings, setTotalEarnings] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, '');
         const token = localStorage.getItem('token');
@@ -67,7 +70,8 @@ const Dashboard = () => {
           setChartData(months.slice(0, currentMonth + 1).map((month, idx) => ({ month, students: counts[idx] })));
           setTotalEarnings(earnings);
         }
-      } catch (error) { console.error("Error loading vendor data:", error); }
+      } catch (error) { console.error("Error loading vendor data:", error); } 
+      finally { setIsLoading(false); }
     };
     fetchData();
   }, []);
@@ -99,10 +103,18 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Referrals" value={stats.totalStudents} icon={Users} color="primary" />
-        <StatCard title="Monthly Referrals" value={stats.monthlyStudents} icon={BarChart3} color="success" />
-        <StatCard title="Today's Referrals" value={stats.todaysStudents} icon={Clock} color="warning" />
-        <StatCard title="Total Earnings" value={`₹${totalEarnings}`} icon={IndianRupee} color="success" />
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[120px] w-full rounded-xl" />
+          ))
+        ) : (
+          <>
+            <StatCard title="Total Referrals" value={stats.totalStudents} icon={Users} color="primary" />
+            <StatCard title="Monthly Referrals" value={stats.monthlyStudents} icon={BarChart3} color="success" />
+            <StatCard title="Today's Referrals" value={stats.todaysStudents} icon={Clock} color="warning" />
+            <StatCard title="Total Earnings" value={`₹${totalEarnings}`} icon={IndianRupee} color="success" />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -113,27 +125,39 @@ const Dashboard = () => {
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Your Referral Code</label>
               <div className="flex gap-2">
-                <div className="flex-1 bg-primary-light border-2 border-primary rounded-[12px] px-4 py-3">
-                  <p className="text-2xl font-bold text-primary text-center tracking-wider">{stats.referral_code}</p>
-                </div>
-                <Button variant="outline" onClick={() => copyToClipboard(stats.referral_code)}>
-                  <Copy className="w-5 h-5" />
-                </Button>
+                {isLoading ? (
+                  <Skeleton className="h-14 w-full rounded-[12px]" />
+                ) : (
+                  <>
+                    <div className="flex-1 bg-primary-light border-2 border-primary rounded-[12px] px-4 py-3">
+                      <p className="text-2xl font-bold text-primary text-center tracking-wider">{stats.referral_code}</p>
+                    </div>
+                    <Button variant="outline" onClick={() => copyToClipboard(stats.referral_code)}>
+                      <Copy className="w-5 h-5" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Referral Link</label>
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={referralLink}
-                  readOnly
-                  className="flex-1 bg-input-background border border-input rounded-[12px] px-4 py-3 text-foreground text-sm"
-                />
-                <Button variant="outline" onClick={() => copyToClipboard(referralLink)}>
-                  <Copy className="w-5 h-5" />
-                </Button>
+                {isLoading ? (
+                  <Skeleton className="h-12 w-full rounded-[12px]" />
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={referralLink}
+                      readOnly
+                      className="flex-1 bg-input-background border border-input rounded-[12px] px-4 py-3 text-foreground text-sm"
+                    />
+                    <Button variant="outline" onClick={() => copyToClipboard(referralLink)}>
+                      <Copy className="w-5 h-5" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -169,15 +193,19 @@ const Dashboard = () => {
 
         <Card>
           <h3 className="text-lg font-semibold text-foreground mb-4">Monthly Enrollments</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="month" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
-              <Tooltip />
-              <Bar dataKey="students" fill="#FF6B00" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isLoading ? (
+            <Skeleton className="w-full h-[300px] rounded-xl" />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" stroke="#6B7280" />
+                <YAxis stroke="#6B7280" />
+                <Tooltip />
+                <Bar dataKey="students" fill="#FF6B00" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
       </div>
 
@@ -197,7 +225,19 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {recentStudents.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[120px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[120px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                  </tr>
+                ))
+              ) : recentStudents.length === 0 ? (
                  <tr><td colSpan={7} className="py-6 text-center text-muted-foreground">No students referred yet.</td></tr>
               ) : recentStudents.map((student, idx) => (
                 <tr key={idx} className="border-b border-border">
@@ -301,10 +341,12 @@ const Dashboard = () => {
 const StudentList = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [viewStudent, setViewStudent] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
+        setIsLoading(true);
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, '');
         const token = localStorage.getItem('token');
@@ -316,6 +358,8 @@ const StudentList = () => {
         }
       } catch (error) {
         console.error("Error fetching students:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchStudents();
@@ -343,7 +387,20 @@ const StudentList = () => {
             </tr>
           </thead>
           <tbody>
-            {students.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border">
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[120px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[120px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                </tr>
+              ))
+            ) : students.length === 0 ? (
                  <tr><td colSpan={8} className="py-6 text-center text-muted-foreground">No students referred yet.</td></tr>
             ) : students.map((student) => (
               <tr key={student.id} className="border-b border-border hover:bg-muted/50 transition-colors">

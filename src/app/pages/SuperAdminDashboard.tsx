@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { Toaster, toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Skeleton } from '../components/ui/skeleton';
 
 const sidebarItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
@@ -32,9 +33,11 @@ const Dashboard = () => {
   const [confirmApproveId, setConfirmApproveId] = useState<string | null>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [commissionRate, setCommissionRate] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchDashboardData = async () => {
       try {
+        setIsLoading(true);
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, ''); // Removes trailing slash if present
         
@@ -50,6 +53,8 @@ const Dashboard = () => {
         if (appsRes.ok) setPendingApps(await appsRes.json());
       } catch (error) {
         console.error("Error fetching admin data:", error);
+      } finally {
+        setIsLoading(false);
       }
   };
 
@@ -97,37 +102,53 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Total Vendors" value={stats.totalVendors} icon={Users} color="primary" />
-        <StatCard title="Total Students" value={stats.totalStudents} icon={GraduationCap} color="success" />
-        <StatCard title="Monthly Students" value={stats.monthlyStudents} icon={BookOpen} color="warning" />
-        <StatCard title="Pending Requests" value={stats.pendingVendors} icon={Bell} color="secondary" />
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[120px] w-full rounded-xl" />
+          ))
+        ) : (
+          <>
+            <StatCard title="Total Vendors" value={stats.totalVendors} icon={Users} color="primary" />
+            <StatCard title="Total Students" value={stats.totalStudents} icon={GraduationCap} color="success" />
+            <StatCard title="Monthly Students" value={stats.monthlyStudents} icon={BookOpen} color="warning" />
+            <StatCard title="Pending Requests" value={stats.pendingVendors} icon={Bell} color="secondary" />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Card>
           <h3 className="text-lg font-semibold text-foreground mb-4">Monthly Student Registrations</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={stats.chartData || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="month" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
-              <Tooltip />
-              <Line type="monotone" dataKey="students" stroke="#FF6B00" strokeWidth={3} />
-            </LineChart>
-          </ResponsiveContainer>
+          {isLoading ? (
+            <Skeleton className="w-full h-[300px] rounded-xl" />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={stats.chartData || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" stroke="#6B7280" />
+                <YAxis stroke="#6B7280" />
+                <Tooltip />
+                <Line type="monotone" dataKey="students" stroke="#FF6B00" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </Card>
 
         <Card>
           <h3 className="text-lg font-semibold text-foreground mb-4">Vendor Growth</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={stats.chartData || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="month" stroke="#6B7280" />
-              <YAxis stroke="#6B7280" />
-              <Tooltip />
-              <Bar dataKey="vendors" fill="#0B1B52" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isLoading ? (
+            <Skeleton className="w-full h-[300px] rounded-xl" />
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.chartData || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" stroke="#6B7280" />
+                <YAxis stroke="#6B7280" />
+                <Tooltip />
+                <Bar dataKey="vendors" fill="#0B1B52" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </Card>
       </div>
 
@@ -152,7 +173,17 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {pendingApps.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    <td className="py-4 px-4"><Skeleton className="h-10 w-[150px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-10 w-[150px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-8 w-[200px]" /></td>
+                  </tr>
+                ))
+              ) : pendingApps.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-muted-foreground">
                     <div className="flex flex-col items-center justify-center">
@@ -408,9 +439,11 @@ const VendorManagement = () => {
     name: '', email: '', phone: '', address: '', city: '', state: '', pincode: ''
   });
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchVendors = async () => {
       try {
+        setIsLoading(true);
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, '');
         const token = localStorage.getItem('token');
@@ -422,6 +455,8 @@ const VendorManagement = () => {
         }
       } catch (error) {
         console.error("Error fetching vendors:", error);
+      } finally {
+        setIsLoading(false);
       }
   };
 
@@ -545,7 +580,19 @@ const VendorManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {vendors.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border">
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[60px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-8 w-[150px]" /></td>
+                </tr>
+              ))
+            ) : vendors.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-muted-foreground">No active vendors found.</td>
                 </tr>
@@ -1030,10 +1077,12 @@ const VendorManagement = () => {
 const StudentManagement = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [viewStudent, setViewStudent] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
+        setIsLoading(true);
         const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const apiUrl = rawApiUrl.replace(/\/$/, '');
         const token = localStorage.getItem('token');
@@ -1045,6 +1094,8 @@ const StudentManagement = () => {
         }
       } catch (error) {
         console.error("Error fetching students:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchStudents();
@@ -1134,7 +1185,20 @@ const StudentManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {students.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border">
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[120px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-8 w-[100px]" /></td>
+                  <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                </tr>
+              ))
+            ) : students.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-8 text-center text-muted-foreground">No students have enrolled yet.</td>
                 </tr>
@@ -1256,15 +1320,19 @@ const CourseManagement = () => {
   const [formData, setFormData] = useState({
     title: '', slug: '', description: '', price: 0, category: '', class: '', status: 'ACTIVE'
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchCourses = async () => {
     try {
+      setIsLoading(true);
       const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const apiUrl = rawApiUrl.replace(/\/$/, '');
       const response = await fetch(`${apiUrl}/api/courses`);
       if (response.ok) setCourses(await response.json());
     } catch (error) {
       console.error("Error fetching courses:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1343,7 +1411,19 @@ const CourseManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {courses.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border">
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[150px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[100px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[80px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-6 w-[60px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                    <td className="py-4 px-4"><Skeleton className="h-8 w-[80px]" /></td>
+                  </tr>
+                ))
+              ) : courses.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-muted-foreground">No courses found.</td>
                   </tr>
