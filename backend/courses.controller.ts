@@ -37,7 +37,7 @@ export const createCourse = async (req: Request, res: Response): Promise<any> =>
 
 export const updateCourse = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const data = courseSchema.partial().parse(req.body);
     const course = await prisma.course.update({ where: { id }, data });
     res.json(course);
@@ -49,7 +49,7 @@ export const updateCourse = async (req: Request, res: Response): Promise<any> =>
 
 export const deleteCourse = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.course.delete({ where: { id } });
     res.json({ message: 'Course deleted successfully' });
   } catch (error: any) {

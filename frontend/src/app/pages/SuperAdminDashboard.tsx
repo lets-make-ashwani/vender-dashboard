@@ -965,25 +965,26 @@ const StudentManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setIsLoading(true);
-        const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const apiUrl = rawApiUrl.replace(/\/$/, '');
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${apiUrl}/api/student-leads`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          setStudents(await response.json());
-        }
-      } catch (error) {
-        console.error("Error fetching students:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchStudents = async () => {
+    try {
+      setIsLoading(true);
+      const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = rawApiUrl.replace(/\/$/, '');
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${apiUrl}/api/student-leads`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        setStudents(await response.json());
       }
-    };
+    } catch (error) {
+      console.error("Error fetching students:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStudents();
   }, []);
 

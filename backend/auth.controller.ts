@@ -48,7 +48,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const token = jwt.sign(
         { id: 'super_admin_env', role: 'SUPER_ADMIN' },
         process.env.JWT_SECRET as string,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any }
       );
       return res.json({ token, user: { id: 'super_admin_env', name: 'Super Admin', email: superAdminEmail, role: 'SUPER_ADMIN' } });
     }
@@ -61,7 +61,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       const token = jwt.sign(
         { id: 'dummy_vendor_env', role: 'VENDOR', vendorId: 'dummy_vendor_id_123' },
         process.env.JWT_SECRET as string,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+        { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any }
       );
       return res.json({ token, user: { id: 'dummy_vendor_env', name: 'Test Vendor', email: dummyVendorEmail, role: 'VENDOR', phone: '9999999999' } });
     }
@@ -79,7 +79,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
     const token = jwt.sign(
       { id: user.id, role: user.role, vendorId: user.vendor?.id },
       process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+      { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any }
     );
 
     const { password: _, ...userWithoutPassword } = user;

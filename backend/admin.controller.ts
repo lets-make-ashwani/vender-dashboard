@@ -146,30 +146,25 @@ export const getPendingApplications = async (req: Request, res: Response): Promi
     });
     res.json(applications);
   } catch (error: any) {
-    // Self-healing logic: If Prisma crashes due to old test records with null bank fields, clean them up automatically
+    // Self-healing logic: If Prisma crashes due to old test records with null bank fields, clean them up automatically using Prisma deleteMany
     try {
-      await prisma.$executeRawUnsafe(`DELETE FROM "VendorApplication" WHERE "bank_name" IS NULL`);
+      await prisma.vendorApplication.deleteMany({
+        where: { bank_name: null }
+      });
       const apps = await prisma.vendorApplication.findMany({
         where: { status: 'PENDING' },
         orderBy: { created_at: 'desc' }
       });
       return res.json(apps);
     } catch(e) {
-      // Fallback for different database SQL syntax
-      try {
-        await prisma.$executeRawUnsafe(`DELETE FROM VendorApplication WHERE bank_name IS NULL`);
-        const apps2 = await prisma.vendorApplication.findMany({ where: { status: 'PENDING' }, orderBy: { created_at: 'desc' } });
-        return res.json(apps2);
-      } catch(e2) {
-        res.status(500).json({ message: 'Internal Server Error' });
-      }
+      res.status(500).json({ message: 'Internal Server Error' });
     }
   }
 };
 
 export const approveApplication = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { commission_rate } = req.body;
     const application = await prisma.vendorApplication.findUnique({ where: { id } });
     
@@ -243,7 +238,7 @@ export const approveApplication = async (req: Request, res: Response): Promise<a
 
 export const rejectApplication = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.vendorApplication.update({ where: { id }, data: { status: 'REJECTED' } });
     res.json({ message: 'Application rejected successfully.' });
   } catch (error: any) {
@@ -272,7 +267,7 @@ export const getAllVendors = async (req: Request, res: Response): Promise<any> =
 
 export const deleteVendor = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     const vendor = await prisma.vendor.findUnique({ where: { id } });
     if (!vendor) {
@@ -300,7 +295,7 @@ export const deleteVendor = async (req: Request, res: Response): Promise<any> =>
 
 export const updateStudentStatus = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status } = req.body;
     
     const student = await prisma.studentLead.update({
@@ -315,7 +310,7 @@ export const updateStudentStatus = async (req: Request, res: Response): Promise<
 
 export const updateVendorCommission = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { commission_rate } = req.body;
     
     const vendor = await prisma.vendor.update({

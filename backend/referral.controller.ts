@@ -3,7 +3,7 @@ import { prisma } from './index';
 
 export const validateReferralCode = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { code } = req.params;
+    const code = req.params.code as string;
 
     const vendor = await prisma.vendor.findUnique({
       where: { referral_code: code },

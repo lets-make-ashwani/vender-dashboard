@@ -1,7 +1,8 @@
+import React from 'react';
 import { Navigate, useLocation } from 'react-router';
 
 interface ProtectedRouteProps {
-  children: JSX.Element;
+  children: React.ReactNode;
   allowedRoles?: string[];
 }
 
